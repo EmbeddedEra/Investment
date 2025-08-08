@@ -1,0 +1,10 @@
+{
+  "name": "Rent Tools",
+  "short_name": "RentTools",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0b0f23",
+  "theme_color": "#0b1022",
+  "description": "Rent yield, HELOC payoff, and mortgage calculators."
+}

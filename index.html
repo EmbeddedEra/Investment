@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rent Yield Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b1022">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #0b1022;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #6ee7b7;
+      --accent-2: #3b82f6;
+      --error: #ef4444;
+      --ring: rgba(99, 102, 241, 0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1000px 600px at 20% -10%, #1d2341, transparent),
+                  radial-gradient(900px 600px at 100% 10%, #0c3b5e, transparent),
+                  linear-gradient(180deg, #0a0e1f, #0b0f23 60%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+    }
+    .header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: conic-gradient(from 160deg at 50% 50%, var(--accent), var(--accent-2));
+      filter: drop-shadow(0 6px 18px rgba(99, 102, 241, 0.35));
+    }
+    h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+    p.sub { margin: 6px 0 22px; color: var(--muted); }
+
+    .grid { display: grid; gap: 16px; }
+    @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+    label { font-size: 13px; color: var(--muted); display: block; margin: 0 0 8px; }
+
+    .input {
+      position: relative; display: flex; align-items: center; gap: 10px;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px; padding: 12px 14px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input:focus-within { border-color: var(--accent-2); box-shadow: 0 0 0 4px var(--ring); }
+    .prefix { color: var(--muted); font-weight: 600; }
+    input[type="text"] {
+      flex: 1; font: inherit; color: var(--text); background: transparent; border: 0; outline: none;
+    }
+    input::placeholder { color: #64748b; }
+
+    .error { color: var(--error); font-size: 12px; margin-top: 6px; min-height: 16px; }
+
+    .actions { display: flex; gap: 12px; margin: 8px 0 4px; flex-wrap: wrap; }
+    .btn {
+      appearance: none; border: 0; cursor: pointer; font-weight: 600; color: #0b1022;
+      background: linear-gradient(135deg, var(--accent), #22c55e 60%);
+      padding: 12px 16px; border-radius: 12px; transition: transform .06s ease, filter .2s ease;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary {
+      background: transparent; color: var(--text);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: none;
+    }
+
+    .results {
+      margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(148,163,184,0.25);
+      display: grid; gap: 12px;
+      grid-template-columns: 1fr; 
+    }
+    @media (min-width: 720px) { .results { grid-template-columns: 1fr 1fr; } }
+
+    .metric { position: relative; overflow: hidden; border-radius: 14px; padding: 16px;
+      background: rgba(2,6,23,0.55); border: 1px solid rgba(148,163,184,0.18);
+    }
+    .metric h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 500; }
+    .metric .value { font-size: 26px; font-weight: 700; letter-spacing: 0.2px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .footer-note { margin-top: 14px; font-size: 12px; color: var(--muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    /* New: tabs */
+    .tablist { display: flex; gap: 8px; margin: 8px 0 18px; flex-wrap: wrap; }
+    .tab-btn { appearance: none; border: 1px solid rgba(148,163,184,0.25); background: rgba(2,6,23,0.35); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .tab-btn.active { border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--ring); background: rgba(2,6,23,0.6); }
+    .tab-panel { display: block; }
+    .tab-panel[hidden] { display: none; }
+
+    /* New: chart styles */
+    .chart { display: grid; gap: 10px; margin-top: 14px; }
+    .chart-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; }
+    .year-label { font-size: 12px; color: var(--muted); }
+    .bar { position: relative; height: 14px; background: rgba(148,163,184,0.2); border-radius: 999px; overflow: hidden; }
+    .segment { height: 100%; display: inline-block; }
+    .segment.interest { background: linear-gradient(90deg, #f43f5e, #ef4444); }
+    .segment.principal { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .figures { font-size: 12px; color: var(--muted); min-width: 140px; text-align: right; }
+
+    /* New: helper for suffix symbol */
+    .suffix { color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <div class="header">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Rent Yield Calculator</h1>
+        <p class="sub">Enter property cost and monthly rent to compute annual revenue and revenue percentage.</p>
+      </div>
+    </div>
+
+    <!-- New: Tabs header -->
+    <div class="tablist" role="tablist" aria-label="Calculators">
+      <button type="button" class="tab-btn active" id="tabbtn-rent" role="tab" aria-selected="true" aria-controls="panel-rent">Rent Yield</button>
+      <button type="button" class="tab-btn" id="tabbtn-heloc" role="tab" aria-selected="false" aria-controls="panel-heloc">HELOC Payoff</button>
+      <button type="button" class="tab-btn" id="tabbtn-mortgage" role="tab" aria-selected="false" aria-controls="panel-mortgage">Mortgage</button>
+    </div>
+
+    <!-- Rent tab panel (existing form moved inside) -->
+    <section id="panel-rent" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-rent">
+      <form id="calcForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="cost">Property cost</label>
+            <div class="input" id="costWrap">
+              <span class="prefix">$</span>
+              <input id="cost" name="cost" type="text" inputmode="decimal" placeholder="e.g., 250000" autocomplete="off" />
+            </div>
+            <div class="error" id="costError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="rent">Monthly rent</label>
+            <div class="input" id="rentWrap">
+              <span class="prefix">$</span>
+              <input id="rent" name="rent" type="text" inputmode="decimal" placeholder="e.g., 1800" autocomplete="off" />
+            </div>
+            <div class="error" id="rentError" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="calcBtn">Calculate</button>
+          <button type="reset" class="btn secondary" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="results" aria-live="polite" aria-atomic="true">
+          <div class="metric">
+            <h3>Annual revenue</h3>
+            <div class="value" id="annualValue">$0.00</div>
+            <div class="hint">Calculated as monthly rent × 12</div>
+          </div>
+          <div class="metric">
+            <h3>Revenue % of cost</h3>
+            <div class="value" id="percentValue">0.00%</div>
+            <div class="hint">Annual revenue ÷ property cost</div>
+          </div>
+        </div>
+
+        <p class="footer-note">Note: This calculator shows gross rent revenue and simple yield. It does not include expenses, taxes, or vacancy.</p>
+      </form>
+    </section>
+
+    <!-- New: HELOC payoff tab panel -->
+    <section id="panel-heloc" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-heloc" hidden>
+      <form id="helocForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="helocBalance">Starting balance</label>
+            <div class="input" id="helocBalanceWrap">
+              <span class="prefix">$</span>
+              <input id="helocBalance" name="helocBalance" type="text" inputmode="decimal" placeholder="e.g., 50000" autocomplete="off" />
+            </div>
+            <div class="error" id="helocBalanceError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="helocApr">APR (annual interest)</label>
+            <div class="input" id="helocAprWrap">
+              <input id="helocApr" name="helocApr" type="text" inputmode="decimal" placeholder="e.g., 7.5%" autocomplete="off" />
+              <span class="suffix">%</span>
+            </div>
+            <div class="error" id="helocAprError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="helocPayment">Monthly payment</label>
+            <div class="input" id="helocPaymentWrap">
+              <span class="prefix">$</span>
+              <input id="helocPayment" name="helocPayment" type="text" inputmode="decimal" placeholder="e.g., 600" autocomplete="off" />
+            </div>
+            <div class="error" id="helocPaymentError" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="helocCalcBtn">Calculate</button>
+          <button type="reset" class="btn secondary" id="helocResetBtn">Reset</button>
+        </div>
+
+        <div class="results" aria-live="polite" aria-atomic="true">
+          <div class="metric">
+            <h3>Payoff time</h3>
+            <div class="value" id="helocPayoff">—</div>
+            <div class="hint">Years and months to $0 balance</div>
+          </div>
+          <div class="metric">
+            <h3>Total interest paid</h3>
+            <div class="value" id="helocTotalInterest">$0.00</div>
+            <div class="hint">Sum of all interest until payoff</div>
+          </div>
+        </div>
+
+        <div class="metric" style="margin-top:12px;">
+          <h3>Year-by-year payments</h3>
+          <div class="hint">Stacked bars: interest (red) + principal (green)</div>
+          <div class="chart" id="helocChart"></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- New: Mortgage calculator tab panel -->
+    <section id="panel-mortgage" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-mortgage" hidden>
+      <form id="mortgageForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="mortgageAmount">Loan amount</label>
+            <div class="input" id="mortgageAmountWrap">
+              <span class="prefix">$</span>
+              <input id="mortgageAmount" name="mortgageAmount" type="text" inputmode="decimal" placeholder="e.g., 350000" autocomplete="off" />
+            </div>
+            <div class="error" id="mortgageAmountError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="mortgageApr">APR (annual interest)</label>
+            <div class="input" id="mortgageAprWrap">
+              <input id="mortgageApr" name="mortgageApr" type="text" inputmode="decimal" placeholder="e.g., 6.75%" autocomplete="off" />
+              <span class="suffix">%</span>
+            </div>
+            <div class="error" id="mortgageAprError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="mortgageYears">Term (years)</label>
+            <div class="input" id="mortgageYearsWrap">
+              <input id="mortgageYears" name="mortgageYears" type="text" inputmode="decimal" placeholder="e.g., 30" autocomplete="off" />
+              <span class="suffix">yrs</span>
+            </div>
+            <div class="error" id="mortgageYearsError" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="mortgageCalcBtn">Calculate</button>
+          <button type="reset" class="btn secondary" id="mortgageResetBtn">Reset</button>
+        </div>
+
+        <div class="results" aria-live="polite" aria-atomic="true">
+          <div class="metric">
+            <h3>Monthly payment</h3>
+            <div class="value" id="mortgageMonthly">$0.00</div>
+            <div class="hint">Principal + interest, fixed</div>
+          </div>
+          <div class="metric">
+            <h3>Total interest paid</h3>
+            <div class="value" id="mortgageTotalInterest">$0.00</div>
+            <div class="hint">Over the full term</div>
+          </div>
+          <div class="metric">
+            <h3>Payoff time</h3>
+            <div class="value" id="mortgagePayoff">—</div>
+            <div class="hint">Time until balance reaches $0</div>
+          </div>
+        </div>
+
+        <div class="metric" style="margin-top:12px;">
+          <h3>Year-by-year payments</h3>
+          <div class="hint">Stacked bars: interest (red) + principal (green)</div>
+          <div class="chart" id="mortgageChart"></div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        // Rent elements (existing)
+        cost: $('cost'), costError: $('costError'), costWrap: $('costWrap'),
+        rent: $('rent'), rentError: $('rentError'), rentWrap: $('rentWrap'),
+        annual: $('annualValue'), percent: $('percentValue'),
+        calcBtn: $('calcBtn'), resetBtn: $('resetBtn'), form: $('calcForm')
+      };
+
+      // New: HELOC elements
+      const helocEls = {
+        form: $('helocForm'),
+        balance: $('helocBalance'), balanceError: $('helocBalanceError'), balanceWrap: $('helocBalanceWrap'),
+        apr: $('helocApr'), aprError: $('helocAprError'), aprWrap: $('helocAprWrap'),
+        payment: $('helocPayment'), paymentError: $('helocPaymentError'), paymentWrap: $('helocPaymentWrap'),
+        calcBtn: $('helocCalcBtn'), resetBtn: $('helocResetBtn'),
+        payoff: $('helocPayoff'), totalInterest: $('helocTotalInterest'),
+        chart: $('helocChart')
+      };
+
+      // New: Mortgage elements
+      const mortgageEls = {
+        form: $('mortgageForm'),
+        amount: $('mortgageAmount'), amountError: $('mortgageAmountError'), amountWrap: $('mortgageAmountWrap'),
+        apr: $('mortgageApr'), aprError: $('mortgageAprError'), aprWrap: $('mortgageAprWrap'),
+        years: $('mortgageYears'), yearsError: $('mortgageYearsError'), yearsWrap: $('mortgageYearsWrap'),
+        calcBtn: $('mortgageCalcBtn'), resetBtn: $('mortgageResetBtn'),
+        monthly: $('mortgageMonthly'), totalInterest: $('mortgageTotalInterest'), payoff: $('mortgagePayoff'),
+        chart: $('mortgageChart')
+      };
+
+      // Tabs
+      const tabbtnRent = $('tabbtn-rent');
+      const tabbtnHeloc = $('tabbtn-heloc');
+      const tabbtnMortgage = $('tabbtn-mortgage');
+      const panelRent = $('panel-rent');
+      const panelHeloc = $('panel-heloc');
+      const panelMortgage = $('panel-mortgage');
+      function switchTab(which) {
+        const isRent = which === 'rent';
+        const isHeloc = which === 'heloc';
+        const isMortgage = which === 'mortgage';
+        tabbtnRent.classList.toggle('active', isRent);
+        tabbtnHeloc.classList.toggle('active', isHeloc);
+        tabbtnMortgage.classList.toggle('active', isMortgage);
+        tabbtnRent.setAttribute('aria-selected', String(isRent));
+        tabbtnHeloc.setAttribute('aria-selected', String(isHeloc));
+        tabbtnMortgage.setAttribute('aria-selected', String(isMortgage));
+        panelRent.toggleAttribute('hidden', !isRent);
+        panelHeloc.toggleAttribute('hidden', !isHeloc);
+        panelMortgage.toggleAttribute('hidden', !isMortgage);
+      }
+      tabbtnRent.addEventListener('click', () => switchTab('rent'));
+      tabbtnHeloc.addEventListener('click', () => switchTab('heloc'));
+      tabbtnMortgage.addEventListener('click', () => switchTab('mortgage'));
+
+      // Formatting helpers
+      const nfMoney = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const nfPct = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      function parseNumber(v) {
+        if (typeof v !== 'string') v = String(v ?? '');
+        const n = parseFloat(v.replace(/[^0-9.-]/g, ''));
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      function showError(which, msg) {
+        const wrap = which === 'cost' ? els.costWrap : els.rentWrap;
+        const out = which === 'cost' ? els.costError : els.rentError;
+        out.textContent = msg || '';
+        wrap.style.borderColor = msg ? 'var(--error)' : 'rgba(148,163,184,0.2)';
+        wrap.style.boxShadow = msg ? '0 0 0 4px rgba(239, 68, 68, 0.15)' : 'none';
+      }
+
+      // Existing rent calculate
+      function calculate() {
+        const cost = parseNumber(els.cost.value);
+        const rent = parseNumber(els.rent.value);
+        let valid = true;
+
+        // Validation
+        if (!Number.isFinite(cost) || cost <= 0) {
+          showError('cost', 'Enter a valid cost greater than 0');
+          valid = false;
+        } else {
+          showError('cost', '');
+        }
+        if (!Number.isFinite(rent) || rent < 0) {
+          showError('rent', 'Enter a valid monthly rent (0 or more)');
+          valid = false;
+        } else {
+          showError('rent', '');
+        }
+
+        const annual = Number.isFinite(rent) ? rent * 12 : 0;
+        const percent = Number.isFinite(cost) && cost > 0 ? (annual / cost) * 100 : NaN;
+
+        els.annual.textContent = `$${nfMoney.format(Number.isFinite(annual) ? annual : 0)}`;
+        els.percent.textContent = Number.isFinite(percent) ? `${nfPct.format(percent)}%` : '—';
+
+        return valid;
+      }
+
+      // New: HELOC helpers
+      function setFieldError(wrapEl, outEl, hasError, msg) {
+        outEl.textContent = hasError ? msg : '';
+        wrapEl.style.borderColor = hasError ? 'var(--error)' : 'rgba(148,163,184,0.2)';
+        wrapEl.style.boxShadow = hasError ? '0 0 0 4px rgba(239, 68, 68, 0.15)' : 'none';
+      }
+      function parseAprToDecimal(v) {
+        const n = parseNumber(v);
+        if (!Number.isFinite(n) || n <= 0) return NaN;
+        return n >= 1 ? n / 100 : n; // allow 7.5 or 0.075
+      }
+
+      function renderChart(years) {
+        const container = helocEls.chart;
+        if (!container) return;
+        container.innerHTML = '';
+        years.forEach(y => {
+          const total = y.interest + y.principal;
+          const iPct = total > 0 ? (y.interest / total) * 100 : 0;
+          const pPct = total > 0 ? (y.principal / total) * 100 : 0;
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          row.innerHTML = `
+            <div class="year-label">Year ${y.year}</div>
+            <div class="bar" title="Interest: $${nfMoney.format(y.interest)} | Principal: $${nfMoney.format(y.principal)}">
+              <span class="segment interest" style="width:${iPct}%;"></span>
+              <span class="segment principal" style="width:${pPct}%;"></span>
+            </div>
+            <div class="figures">$${nfMoney.format(y.interest)} / $${nfMoney.format(y.principal)}</div>
+          `;
+          container.appendChild(row);
+        });
+      }
+
+      function helocCalculate() {
+        const bal = parseNumber(helocEls.balance.value);
+        const aprDec = parseAprToDecimal(helocEls.apr.value);
+        const pay = parseNumber(helocEls.payment.value);
+
+        let ok = true;
+        setFieldError(helocEls.balanceWrap, helocEls.balanceError, !Number.isFinite(bal) || bal <= 0, 'Enter a starting balance > 0');
+        if (!Number.isFinite(bal) || bal <= 0) ok = false;
+        setFieldError(helocEls.aprWrap, helocEls.aprError, !Number.isFinite(aprDec) || aprDec <= 0, 'Enter APR like 7.5 or 7.5%');
+        if (!Number.isFinite(aprDec) || aprDec <= 0) ok = false;
+        setFieldError(helocEls.paymentWrap, helocEls.paymentError, !Number.isFinite(pay) || pay <= 0, 'Enter a monthly payment > 0');
+        if (!Number.isFinite(pay) || pay <= 0) ok = false;
+        if (!ok) { helocEls.payoff.textContent = '—'; helocEls.totalInterest.textContent = '$0.00'; helocEls.chart.innerHTML = ''; return false; }
+
+        const r = aprDec / 12; // monthly rate
+        let balance = bal;
+        let month = 0;
+        let totalInterest = 0;
+        const years = [];
+        let y = 1;
+        let yInterest = 0, yPrincipal = 0;
+
+        const maxMonths = 100 * 12; // safety cap
+        while (balance > 0 && month < maxMonths) {
+          month++;
+          const interest = balance * r;
+          let principal = pay - interest;
+          if (principal <= 0 && balance - principal >= balance) {
+            // Payment too low to amortize
+            setFieldError(helocEls.paymentWrap, helocEls.paymentError, true, 'Payment is too low to ever pay off (increase it).');
+            helocEls.payoff.textContent = '—';
+            helocEls.totalInterest.textContent = '$0.00';
+            helocEls.chart.innerHTML = '';
+            return false;
+          }
+          if (principal > balance) {
+            principal = balance; // last month, pay only remaining principal
+          }
+          balance -= principal;
+          totalInterest += interest;
+          yInterest += interest;
+          yPrincipal += principal;
+
+          // End of year or loan paid
+          if (month % 12 === 0 || balance <= 0) {
+            years.push({ year: y, interest: yInterest, principal: yPrincipal });
+            y++;
+            yInterest = 0; yPrincipal = 0;
+          }
+        }
+
+        if (month >= maxMonths && balance > 0) {
+          setFieldError(helocEls.paymentWrap, helocEls.paymentError, true, 'Payment too low or APR too high (exceeds 100 years).');
+          helocEls.payoff.textContent = '—';
+          helocEls.totalInterest.textContent = '$0.00';
+          helocEls.chart.innerHTML = '';
+          return false;
+        }
+
+        const yearsCount = Math.floor(month / 12);
+        const monthsRemainder = month % 12;
+        const payoffStr = yearsCount > 0
+          ? `${yearsCount} year${yearsCount!==1?'s':''} ${monthsRemainder} month${monthsRemainder!==1?'s':''}`
+          : `${monthsRemainder} month${monthsRemainder!==1?'s':''}`;
+
+        helocEls.payoff.textContent = payoffStr;
+        helocEls.totalInterest.textContent = `$${nfMoney.format(totalInterest)}`;
+        renderChart(years);
+        return true;
+      }
+
+      // Helpers already defined: nfMoney, parseNumber, parseAprToDecimal, setFieldError, renderChart (for heloc)
+      // We'll reuse a chart renderer specialized for mortgage to avoid colliding container
+      function renderMortgageChart(years) {
+        const container = mortgageEls.chart;
+        if (!container) return;
+        container.innerHTML = '';
+        years.forEach(y => {
+          const total = y.interest + y.principal;
+          const iPct = total > 0 ? (y.interest / total) * 100 : 0;
+          const pPct = total > 0 ? (y.principal / total) * 100 : 0;
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          row.innerHTML = `
+            <div class="year-label">Year ${y.year}</div>
+            <div class="bar" title="Interest: $${nfMoney.format(y.interest)} | Principal: $${nfMoney.format(y.principal)}">
+              <span class="segment interest" style="width:${iPct}%;"></span>
+              <span class="segment principal" style="width:${pPct}%;"></span>
+            </div>
+            <div class="figures">$${nfMoney.format(y.interest)} / $${nfMoney.format(y.principal)}</div>
+          `;
+          container.appendChild(row);
+        });
+      }
+
+      function mortgageCalculate() {
+        const P = parseNumber(mortgageEls.amount.value);
+        const aprDec = parseAprToDecimal(mortgageEls.apr.value);
+        const yrs = parseNumber(mortgageEls.years.value);
+
+        let ok = true;
+        setFieldError(mortgageEls.amountWrap, mortgageEls.amountError, !Number.isFinite(P) || P <= 0, 'Enter a loan amount > 0');
+        if (!Number.isFinite(P) || P <= 0) ok = false;
+        setFieldError(mortgageEls.aprWrap, mortgageEls.aprError, !Number.isFinite(aprDec) || aprDec < 0, 'Enter APR like 6.75 or 6.75%');
+        if (!Number.isFinite(aprDec) || aprDec < 0) ok = false;
+        setFieldError(mortgageEls.yearsWrap, mortgageEls.yearsError, !Number.isFinite(yrs) || yrs <= 0, 'Enter term in years > 0');
+        if (!Number.isFinite(yrs) || yrs <= 0) ok = false;
+
+        if (!ok) {
+          mortgageEls.monthly.textContent = '$0.00';
+          mortgageEls.totalInterest.textContent = '$0.00';
+          mortgageEls.payoff.textContent = '—';
+          mortgageEls.chart.innerHTML = '';
+          return false;
+        }
+
+        const n = Math.max(1, Math.round(yrs * 12));
+        const i = aprDec / 12; // monthly rate
+        let M;
+        if (i === 0) {
+          M = P / n;
+        } else {
+          const pow = Math.pow(1 + i, -n);
+          M = (P * i) / (1 - pow);
+        }
+
+        // Amortization for yearly aggregates
+        let balance = P;
+        let month = 0;
+        let totalInterest = 0;
+        const years = [];
+        let y = 1;
+        let yInterest = 0, yPrincipal = 0;
+
+        while (month < n && balance > 0) {
+          month++;
+          const interest = balance * i;
+          let principal = (i === 0 ? P / n : M) - interest;
+          if (principal > balance) principal = balance;
+          balance -= principal;
+          totalInterest += interest;
+          yInterest += interest;
+          yPrincipal += principal;
+          if (month % 12 === 0 || month === n || balance <= 0) {
+            years.push({ year: y, interest: yInterest, principal: yPrincipal });
+            y++; yInterest = 0; yPrincipal = 0;
+          }
+        }
+
+        mortgageEls.monthly.textContent = `$${nfMoney.format(M)}`;
+        mortgageEls.totalInterest.textContent = `$${nfMoney.format(totalInterest)}`;
+        const yearsCount = Math.floor(n / 12);
+        const monthsRemainder = n % 12;
+        const payoffStr = yearsCount > 0
+          ? `${yearsCount} year${yearsCount!==1?'s':''} ${monthsRemainder} month${monthsRemainder!==1?'s':''}`
+          : `${monthsRemainder} month${monthsRemainder!==1?'s':''}`;
+        mortgageEls.payoff.textContent = payoffStr;
+        renderMortgageChart(years);
+        return true;
+      }
+
+      // Live calculation on input for both calculators
+      ['input', 'blur'].forEach(evt => {
+        els.cost?.addEventListener?.(evt, calculate);
+        els.rent?.addEventListener?.(evt, calculate);
+        helocEls.balance?.addEventListener?.(evt, helocCalculate);
+        helocEls.apr?.addEventListener?.(evt, helocCalculate);
+        helocEls.payment?.addEventListener?.(evt, helocCalculate);
+        mortgageEls.amount?.addEventListener?.(evt, mortgageCalculate);
+        mortgageEls.apr?.addEventListener?.(evt, mortgageCalculate);
+        mortgageEls.years?.addEventListener?.(evt, mortgageCalculate);
+      });
+
+      // Buttons
+      els.calcBtn?.addEventListener('click', () => { calculate(); els.calcBtn.blur(); });
+      els.resetBtn?.addEventListener('click', () => {
+        requestAnimationFrame(() => { if (els.cost && els.rent) { /* ...existing code... */ }
+          // Clear rent errors and outputs
+          if (els.cost && els.rent) {
+            const clear = (w, o) => { o.textContent=''; w.style.borderColor='rgba(148,163,184,0.2)'; w.style.boxShadow='none'; };
+            clear(els.costWrap, els.costError); clear(els.rentWrap, els.rentError);
+            els.annual.textContent = '$0.00'; els.percent.textContent = '0.00%';
+          }
+        });
+      });
+
+      helocEls.calcBtn?.addEventListener('click', () => { helocCalculate(); helocEls.calcBtn.blur(); });
+      helocEls.resetBtn?.addEventListener('click', () => {
+        requestAnimationFrame(() => {
+          const clear = (w, o) => { o.textContent=''; w.style.borderColor='rgba(148,163,184,0.2)'; w.style.boxShadow='none'; };
+          clear(helocEls.balanceWrap, helocEls.balanceError);
+          clear(helocEls.aprWrap, helocEls.aprError);
+          clear(helocEls.paymentWrap, helocEls.paymentError);
+          helocEls.payoff.textContent = '—';
+          helocEls.totalInterest.textContent = '$0.00';
+          helocEls.chart.innerHTML = '';
+        });
+      });
+      mortgageEls.calcBtn?.addEventListener('click', () => { mortgageCalculate(); mortgageEls.calcBtn.blur(); });
+      mortgageEls.resetBtn?.addEventListener('click', () => {
+        requestAnimationFrame(() => {
+          const clear = (w, o) => { o.textContent=''; w.style.borderColor='rgba(148,163,184,0.2)'; w.style.boxShadow='none'; };
+          clear(mortgageEls.amountWrap, mortgageEls.amountError);
+          clear(mortgageEls.aprWrap, mortgageEls.aprError);
+          clear(mortgageEls.yearsWrap, mortgageEls.yearsError);
+          mortgageEls.monthly.textContent = '$0.00';
+          mortgageEls.totalInterest.textContent = '$0.00';
+          mortgageEls.payoff.textContent = '—';
+          mortgageEls.chart.innerHTML = '';
+        });
+      });
+
+      // Submit handlers
+      els.form?.addEventListener('submit', (e) => { e.preventDefault(); calculate(); });
+      helocEls.form?.addEventListener('submit', (e) => { e.preventDefault(); helocCalculate(); });
+      mortgageEls.form?.addEventListener('submit', (e) => { e.preventDefault(); mortgageCalculate(); });
+
+      // Initial compute
+      calculate();
+      // Do not auto-calc HELOC unless fields are filled; still call to clear outputs
+      helocCalculate();
+      mortgageCalculate();
+    })();
+  </script>
+  <script>
+    // Register Service Worker for offline
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
