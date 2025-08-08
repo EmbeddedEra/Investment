@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rent Yield Calculator</title>
+  <title>Loan & Investment Calculators</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -133,7 +133,7 @@
     <div class="header">
       <div class="logo" aria-hidden="true"></div>
       <div>
-        <h1>Rent Yield Calculator</h1>
+        <h1>Loan & Investment Calculators</h1>
         <p class="sub">Enter property cost and monthly rent to compute annual revenue and revenue percentage.</p>
       </div>
     </div>
@@ -143,6 +143,8 @@
       <button type="button" class="tab-btn active" id="tabbtn-rent" role="tab" aria-selected="true" aria-controls="panel-rent">Rent Yield</button>
       <button type="button" class="tab-btn" id="tabbtn-heloc" role="tab" aria-selected="false" aria-controls="panel-heloc">HELOC Payoff</button>
       <button type="button" class="tab-btn" id="tabbtn-mortgage" role="tab" aria-selected="false" aria-controls="panel-mortgage">Mortgage</button>
+      <!-- Added: Car Finance tab button -->
+      <button type="button" class="tab-btn" id="tabbtn-car" role="tab" aria-selected="false" aria-controls="panel-car">Car Finance</button>
     </div>
 
     <!-- Rent tab panel (existing form moved inside) -->
@@ -310,6 +312,92 @@
         </div>
       </form>
     </section>
+
+    <!-- Added: Car Finance calculator tab panel -->
+    <section id="panel-car" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-car" hidden>
+      <form id="carForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="carPrice">Vehicle price</label>
+            <div class="input" id="carPriceWrap">
+              <span class="prefix">$</span>
+              <input id="carPrice" name="carPrice" type="text" inputmode="decimal" placeholder="e.g., 30000" autocomplete="off" />
+            </div>
+            <div class="error" id="carPriceError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="carDown">Down payment</label>
+            <div class="input" id="carDownWrap">
+              <span class="prefix">$</span>
+              <input id="carDown" name="carDown" type="text" inputmode="decimal" placeholder="e.g., 5000" autocomplete="off" />
+            </div>
+            <div class="error" id="carDownError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="carApr">APR (annual interest)</label>
+            <div class="input" id="carAprWrap">
+              <input id="carApr" name="carApr" type="text" inputmode="decimal" placeholder="e.g., 5.9%" autocomplete="off" />
+              <span class="suffix">%</span>
+            </div>
+            <div class="error" id="carAprError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="carYears">Term (years)</label>
+            <div class="input" id="carYearsWrap">
+              <input id="carYears" name="carYears" type="text" inputmode="decimal" placeholder="e.g., 5" autocomplete="off" />
+              <span class="suffix">yrs</span>
+            </div>
+            <div class="error" id="carYearsError" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="carTax">Sales tax</label>
+            <div class="input" id="carTaxWrap">
+              <input id="carTax" name="carTax" type="text" inputmode="decimal" placeholder="e.g., 8.5%" autocomplete="off" />
+              <span class="suffix">%</span>
+            </div>
+            <div class="error" id="carTaxError" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="carCalcBtn">Calculate</button>
+          <button type="reset" class="btn secondary" id="carResetBtn">Reset</button>
+        </div>
+
+        <div class="results" aria-live="polite" aria-atomic="true">
+          <div class="metric">
+            <h3>Monthly payment</h3>
+            <div class="value" id="carMonthly">$0.00</div>
+            <div class="hint">Principal + interest, fixed</div>
+          </div>
+          <div class="metric">
+            <h3>Total interest paid</h3>
+            <div class="value" id="carTotalInterest">$0.00</div>
+            <div class="hint">Over the full term</div>
+          </div>
+          <div class="metric">
+            <h3>Loan amount</h3>
+            <div class="value" id="carLoanAmount">$0.00</div>
+            <div class="hint">(Price + tax) − down payment</div>
+          </div>
+          <div class="metric">
+            <h3>Payoff time</h3>
+            <div class="value" id="carPayoff">—</div>
+            <div class="hint">Time until balance reaches $0</div>
+          </div>
+        </div>
+
+        <div class="metric" style="margin-top:12px;">
+          <h3>Year-by-year payments</h3>
+          <div class="hint">Stacked bars: interest (red) + principal (green)</div>
+          <div class="chart" id="carChart"></div>
+        </div>
+      </form>
+    </section>
   </main>
 
   <script>
@@ -345,30 +433,50 @@
         chart: $('mortgageChart')
       };
 
+      // Added: Car Finance elements
+      const carEls = {
+        form: $('carForm'),
+        price: $('carPrice'), priceError: $('carPriceError'), priceWrap: $('carPriceWrap'),
+        down: $('carDown'), downError: $('carDownError'), downWrap: $('carDownWrap'),
+        apr: $('carApr'), aprError: $('carAprError'), aprWrap: $('carAprWrap'),
+        years: $('carYears'), yearsError: $('carYearsError'), yearsWrap: $('carYearsWrap'),
+        tax: $('carTax'), taxError: $('carTaxError'), taxWrap: $('carTaxWrap'),
+        calcBtn: $('carCalcBtn'), resetBtn: $('carResetBtn'),
+        monthly: $('carMonthly'), totalInterest: $('carTotalInterest'), loanAmount: $('carLoanAmount'), payoff: $('carPayoff'),
+        chart: $('carChart')
+      };
+
       // Tabs
       const tabbtnRent = $('tabbtn-rent');
       const tabbtnHeloc = $('tabbtn-heloc');
       const tabbtnMortgage = $('tabbtn-mortgage');
+      const tabbtnCar = $('tabbtn-car');
       const panelRent = $('panel-rent');
       const panelHeloc = $('panel-heloc');
       const panelMortgage = $('panel-mortgage');
+      const panelCar = $('panel-car');
       function switchTab(which) {
         const isRent = which === 'rent';
         const isHeloc = which === 'heloc';
         const isMortgage = which === 'mortgage';
+        const isCar = which === 'car';
         tabbtnRent.classList.toggle('active', isRent);
         tabbtnHeloc.classList.toggle('active', isHeloc);
         tabbtnMortgage.classList.toggle('active', isMortgage);
+        tabbtnCar.classList.toggle('active', isCar);
         tabbtnRent.setAttribute('aria-selected', String(isRent));
         tabbtnHeloc.setAttribute('aria-selected', String(isHeloc));
         tabbtnMortgage.setAttribute('aria-selected', String(isMortgage));
+        tabbtnCar.setAttribute('aria-selected', String(isCar));
         panelRent.toggleAttribute('hidden', !isRent);
         panelHeloc.toggleAttribute('hidden', !isHeloc);
         panelMortgage.toggleAttribute('hidden', !isMortgage);
+        panelCar.toggleAttribute('hidden', !isCar);
       }
       tabbtnRent.addEventListener('click', () => switchTab('rent'));
       tabbtnHeloc.addEventListener('click', () => switchTab('heloc'));
       tabbtnMortgage.addEventListener('click', () => switchTab('mortgage'));
+      tabbtnCar.addEventListener('click', () => switchTab('car'));
 
       // Formatting helpers
       const nfMoney = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -612,7 +720,112 @@
         return true;
       }
 
-      // Live calculation on input for both calculators
+      // Added: Car helpers
+      function parsePercentAllowZero(v) {
+        const n = parseNumber(v);
+        if (!Number.isFinite(n) || n < 0) return NaN;
+        return n >= 1 ? n / 100 : n; // allow 8.5 or 0.085; allow 0
+      }
+      function renderCarChart(years) {
+        const container = carEls.chart;
+        if (!container) return;
+        container.innerHTML = '';
+        years.forEach(y => {
+          const total = y.interest + y.principal;
+          const iPct = total > 0 ? (y.interest / total) * 100 : 0;
+          const pPct = total > 0 ? (y.principal / total) * 100 : 0;
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          row.innerHTML = `
+            <div class="year-label">Year ${y.year}</div>
+            <div class="bar" title="Interest: $${nfMoney.format(y.interest)} | Principal: $${nfMoney.format(y.principal)}">
+              <span class="segment interest" style="width:${iPct}%;"></span>
+              <span class="segment principal" style="width:${pPct}%;"></span>
+            </div>
+            <div class="figures">$${nfMoney.format(y.interest)} / $${nfMoney.format(y.principal)}</div>
+          `;
+          container.appendChild(row);
+        });
+      }
+      function carCalculate() {
+        const price = parseNumber(carEls.price.value);
+        const down = parseNumber(carEls.down.value);
+        const aprDec = parsePercentAllowZero(carEls.apr.value);
+        const yrs = parseNumber(carEls.years.value);
+        const taxDec = parsePercentAllowZero(carEls.tax.value || '0');
+
+        let ok = true;
+        setFieldError(carEls.priceWrap, carEls.priceError, !Number.isFinite(price) || price <= 0, 'Enter a vehicle price > 0');
+        if (!Number.isFinite(price) || price <= 0) ok = false;
+        setFieldError(carEls.downWrap, carEls.downError, !Number.isFinite(down) || down < 0, 'Enter a down payment ≥ 0');
+        if (!Number.isFinite(down) || down < 0) ok = false;
+        setFieldError(carEls.aprWrap, carEls.aprError, !Number.isFinite(aprDec) || aprDec < 0, 'Enter APR like 5.9 or 5.9% (≥ 0)');
+        if (!Number.isFinite(aprDec) || aprDec < 0) ok = false;
+        setFieldError(carEls.yearsWrap, carEls.yearsError, !Number.isFinite(yrs) || yrs <= 0, 'Enter term in years > 0');
+        if (!Number.isFinite(yrs) || yrs <= 0) ok = false;
+        setFieldError(carEls.taxWrap, carEls.taxError, !Number.isFinite(taxDec) || taxDec < 0, 'Enter tax like 8.5 or 8.5% (≥ 0)');
+        if (!Number.isFinite(taxDec) || taxDec < 0) ok = false;
+
+        if (!ok) {
+          carEls.monthly.textContent = '$0.00';
+          carEls.totalInterest.textContent = '$0.00';
+          carEls.loanAmount.textContent = '$0.00';
+          carEls.payoff.textContent = '—';
+          carEls.chart.innerHTML = '';
+          return false;
+        }
+
+        const gross = price * (1 + taxDec);
+        const P = Math.max(0, gross - down);
+        const n = Math.max(1, Math.round(yrs * 12));
+        const i = aprDec / 12;
+
+        let M;
+        if (i === 0) {
+          M = P / n;
+        } else {
+          const pow = Math.pow(1 + i, -n);
+          M = (P * i) / (1 - pow);
+        }
+
+        // Amortization for yearly aggregates
+        let balance = P;
+        let month = 0;
+        let totalInterest = 0;
+        const years = [];
+        let y = 1;
+        let yInterest = 0, yPrincipal = 0;
+
+        while (month < n && balance > 0) {
+          month++;
+          const interest = balance * i;
+          let principal = (i === 0 ? P / n : M) - interest;
+          if (principal > balance) principal = balance;
+          balance -= principal;
+          totalInterest += interest;
+          yInterest += interest;
+          yPrincipal += principal;
+          if (month % 12 === 0 || month === n || balance <= 0) {
+            years.push({ year: y, interest: yInterest, principal: yPrincipal });
+            y++; yInterest = 0; yPrincipal = 0;
+          }
+        }
+
+        const yearsCount = Math.floor(n / 12);
+        const monthsRemainder = n % 12;
+        const payoffStr = yearsCount > 0
+          ? `${yearsCount} year${yearsCount!==1?'s':''} ${monthsRemainder} month${monthsRemainder!==1?'s':''}`
+          : `${monthsRemainder} month${monthsRemainder!==1?'s':''}`;
+
+        carEls.monthly.textContent = `$${nfMoney.format(M)}`;
+        carEls.totalInterest.textContent = `$${nfMoney.format(totalInterest)}`;
+        carEls.loanAmount.textContent = `$${nfMoney.format(P)}`;
+        carEls.payoff.textContent = payoffStr;
+        renderCarChart(years);
+        return true;
+      }
+
+      // Live calculation on input for all calculators
       ['input', 'blur'].forEach(evt => {
         els.cost?.addEventListener?.(evt, calculate);
         els.rent?.addEventListener?.(evt, calculate);
@@ -622,6 +835,11 @@
         mortgageEls.amount?.addEventListener?.(evt, mortgageCalculate);
         mortgageEls.apr?.addEventListener?.(evt, mortgageCalculate);
         mortgageEls.years?.addEventListener?.(evt, mortgageCalculate);
+        carEls.price?.addEventListener?.(evt, carCalculate);
+        carEls.down?.addEventListener?.(evt, carCalculate);
+        carEls.apr?.addEventListener?.(evt, carCalculate);
+        carEls.years?.addEventListener?.(evt, carCalculate);
+        carEls.tax?.addEventListener?.(evt, carCalculate);
       });
 
       // Buttons
@@ -662,17 +880,35 @@
           mortgageEls.chart.innerHTML = '';
         });
       });
+      carEls.calcBtn?.addEventListener('click', () => { carCalculate(); carEls.calcBtn.blur(); });
+      carEls.resetBtn?.addEventListener('click', () => {
+        requestAnimationFrame(() => {
+          const clear = (w, o) => { o.textContent=''; w.style.borderColor='rgba(148,163,184,0.2)'; w.style.boxShadow='none'; };
+          clear(carEls.priceWrap, carEls.priceError);
+          clear(carEls.downWrap, carEls.downError);
+          clear(carEls.aprWrap, carEls.aprError);
+          clear(carEls.yearsWrap, carEls.yearsError);
+          clear(carEls.taxWrap, carEls.taxError);
+          carEls.monthly.textContent = '$0.00';
+          carEls.totalInterest.textContent = '$0.00';
+          carEls.loanAmount.textContent = '$0.00';
+          carEls.payoff.textContent = '—';
+          carEls.chart.innerHTML = '';
+        });
+      });
 
       // Submit handlers
       els.form?.addEventListener('submit', (e) => { e.preventDefault(); calculate(); });
       helocEls.form?.addEventListener('submit', (e) => { e.preventDefault(); helocCalculate(); });
       mortgageEls.form?.addEventListener('submit', (e) => { e.preventDefault(); mortgageCalculate(); });
+      carEls.form?.addEventListener('submit', (e) => { e.preventDefault(); carCalculate(); });
 
       // Initial compute
       calculate();
       // Do not auto-calc HELOC unless fields are filled; still call to clear outputs
       helocCalculate();
       mortgageCalculate();
+      carCalculate();
     })();
   </script>
   <script>
